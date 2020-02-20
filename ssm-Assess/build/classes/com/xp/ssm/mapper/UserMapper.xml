@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xp.ssm.mapper.UserMapper">
+	<resultMap id="userMap" type="com.xp.ssm.pojo.Users">
+    <id column="USER_ID" jdbcType="INTEGER" property="USER_ID" />
+    <result column="USER_NAME" jdbcType="VARCHAR" property="USER_NAME" />
+    <result column="USER_SEX" jdbcType="VARCHAR" property="USER_SEX" />
+    <result column="USER_STATE" jdbcType="INTEGER" property="USER_STATE" />
+    <result column="DEP_ID" jdbcType="INTEGER" property="DEP_ID" />
+    <!-- 联合查询 -->
+    <association property="department" javaType="com.xp.ssm.pojo.Department">
+    	<id column="DEP_ID" jdbcType="INTEGER" property="DEP_ID"/>
+    	<result column="DEP_NAME" jdbcType="VARCHAR" property="DEP_NAME"/>
+    </association>
+    </resultMap>
+	
+	<!-- 用户分页查询和分页数据start 和size查询数据 -->
+    <select id="findByPage" parameterType="Map" resultMap="userMap">
+        select u.USER_ID, u.USER_NAME, u.USER_SEX, u.USER_STATE, u.DEP_ID, d.DEP_ID, d.DEP_NAME FROM `user_info` u LEFT JOIN depat_info d ON u.DEP_ID=d.DEP_ID       
+		limit #{start},#{size}
+    </select>	
+    
+    <!-- 查询用户总记录数 -->
+    <select id="selectCount" resultType="int">
+        select count(*) from user_info
+    </select>
+    
+    <!-- 根据用户传入条件查询  用户姓名和部门ID -->
+     <select id="selectByName"  resultMap="userMap" parameterType="Map">
+        select u.USER_ID,u.USER_NAME, u.USER_SEX, u.USER_STATE,u.DEP_ID,d.DEP_ID,d.DEP_NAME FROM `user_info` u LEFT JOIN depat_info d ON u.DEP_ID=d.DEP_ID       
+       <where>
+       		<if test="USER_NAME != null and USER_NAME != ''">
+       			and u.USER_NAME like  CONCAT('%',#{USER_NAME},'%')
+       		</if>
+       		<if test="DEP_ID != null and DEP_ID !=0">
+       			and u.DEP_ID = #{DEP_ID}
+       		</if>
+       </where>
+      </select>
+	
+	<!-- 员工名校验 -->
+	<select id="vaildate" resultMap="userMap">
+		select USER_NAME from user_info where USER_NAME=#{USER_NAME}
+	</select>
+	
+	<!-- 根据员工id查询 -->
+	<select id="selectByUserid" resultMap="userMap">
+		 select u.USER_ID,u.USER_NAME, u.USER_SEX, u.USER_STATE,u.DEP_ID,d.DEP_ID,d.DEP_NAME FROM `user_info` u LEFT JOIN depat_info d ON u.DEP_ID=d.DEP_ID
+		 <where>
+		 	USER_ID = #{USER_ID}
+		 </where>
+	</select>
+	
+	<!-- 根据部门id查询 -->
+	<select id="depIdUser" resultMap="userMap">
+		 select u.USER_ID,u.USER_NAME, u.USER_SEX, u.USER_STATE,u.DEP_ID,d.DEP_ID,d.DEP_NAME FROM `user_info` u LEFT JOIN depat_info d ON u.DEP_ID=d.DEP_ID
+		 <where>
+		 	u.DEP_ID = #{DEP_ID}
+		 </where>
+	</select>
+	
+	<!-- 添加员工 -->
+	<insert id="addUser" >
+		insert into user_info (USER_ID, USER_NAME, USER_SEX, USER_STATE, DEP_ID) 
+		values (USER_ID,#{USER_NAME},#{USER_SEX},USER_STATE, #{DEP_ID})
+	</insert> 
+	
+	<!-- 修改员工信息 -->
+	<update id="updateUser" parameterType="com.xp.ssm.pojo.Users">
+		update user_info u
+		<set>
+	      <if test="USER_NAME != null ">
+	        USER_NAME = #{USER_NAME,jdbcType=VARCHAR},
+	      </if>
+	      <if test="USER_SEX != null">
+	        USER_SEX = #{USER_SEX,jdbcType=VARCHAR},
+	      </if>
+	      <if test="DEP_ID != null">
+	        DEP_ID = #{DEP_ID,jdbcType=INTEGER},
+	      </if>
+	    </set>
+	      where 1 = 1 and USER_ID = #{USER_ID,jdbcType=INTEGER} and USER_STATE = 0;
+	</update>
+	
+	<!-- 删除员工信息 -->
+	<update id="deleteUser" >
+		update user_info set USER_STATE = 1 where USER_ID = #{USER_ID};
+	</update>
+	
+	<!-- 校验部门中是否有员工 -->
+	<select id="checkout" resultType="int">
+		select count(*) from user_info where DEP_ID = #{DEP_ID};
+	</select>
+
+</mapper>
